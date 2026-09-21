@@ -108,6 +108,10 @@
         var min = d.getMinutes(); //Get current minutes
         var sec = d.getSeconds(); //Get current seconds
         var ampm; //Declare empty variable to store AM or PM
+        var utchr = d.getUTCHours(); //Get current Greenwich Mean Time (GMT)
+        var timeDiff; //To store time difference between GMT hour and Local hour
+        var adjTimeDiff; //To store time difference converted to positive number
+        var timeZone; //To store the 4 time zones (PT,MT,CT,ET)
 
         //Add 0 to single digits for seconds
         if (sec < 10) {
@@ -128,10 +132,45 @@
             ampm = "AM"; //Set to AM
         }
 
-        //Assemble time format to display
-        var time = hr + ":" + min + ":" + sec + " " + ampm;
+        //Convert GMT hour from military time to standard time
+        if (utchr > 12) {
+            utchr -= 12;
+        }
 
-        //Display current local time on HTML element
+        //Calculate time difference between GMT hour and local hour
+        timeDiff = utchr - hr;
+
+        //Convert time difference, if negative, to positive
+        if (timeDiff < 0) {
+            adjTimeDiff = timeDiff + 12;
+        } else {
+            adjTimeDiff = timeDiff;
+        }
+
+        //Add 1 hour back during daylight saving time so each zone has one fixed difference
+        var janOffset = new Date(d.getFullYear(), 0, 1).getTimezoneOffset();
+        var julOffset = new Date(d.getFullYear(), 6, 1).getTimezoneOffset();
+        if (d.getTimezoneOffset() < Math.max(janOffset, julOffset)) {
+            adjTimeDiff += 1;
+        }
+
+        //Check which time zone based on the adjusted time difference
+        if (adjTimeDiff == 8) {
+            timeZone = "PT"; //Pacific Time
+        } else if (adjTimeDiff == 7) {
+            timeZone = "MT"; //Mountain Time
+        } else if (adjTimeDiff == 6) {
+            timeZone = "CT"; //Central Time
+        } else if (adjTimeDiff == 5) {
+            timeZone = "ET"; //Eastern Time
+        } else {
+            timeZone = ""; //Outside the 4 time zones
+        }
+
+        //Assemble time format to display
+        var time = hr + ":" + min + ":" + sec + " " + ampm + " " + timeZone;
+
+        //Display current local time and time zone on HTML element
         document.getElementById("clock").innerText = time; //adding time
     }
 
